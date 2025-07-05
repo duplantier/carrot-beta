@@ -6,8 +6,7 @@ import React from "react";
 
 const ProtectedHeader = async () => {
   const session = await auth();
-  const user = await MiniKit.getUserInfo();
-  console.log(user.walletAddress);
+  const user = await MiniKit.getUserByUsername(session?.user?.username || "");
   return (
     <header className="px-6 py-4  flex justify-between items-center">
       <Link href="/home">
