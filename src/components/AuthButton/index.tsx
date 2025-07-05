@@ -1,8 +1,9 @@
-'use client';
-import { walletAuth } from '@/auth/wallet';
-import { Button, LiveFeedback } from '@worldcoin/mini-apps-ui-kit-react';
-import { useMiniKit } from '@worldcoin/minikit-js/minikit-provider';
-import { useCallback, useEffect, useState } from 'react';
+"use client";
+import { walletAuth } from "@/auth/wallet";
+import { Button, LiveFeedback } from "@worldcoin/mini-apps-ui-kit-react";
+import { useMiniKit } from "@worldcoin/minikit-js/minikit-provider";
+import { useSession } from "next-auth/react";
+import { useCallback, useEffect, useState } from "react";
 
 /**
  * This component is an example of how to authenticate a user
@@ -12,7 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 export const AuthButton = () => {
   const [isPending, setIsPending] = useState(false);
   const { isInstalled } = useMiniKit();
-
+  const { data: session } = useSession();
   const onClick = useCallback(async () => {
     if (!isInstalled || isPending) {
       return;
@@ -21,7 +22,7 @@ export const AuthButton = () => {
     try {
       await walletAuth();
     } catch (error) {
-      console.error('Wallet authentication button error', error);
+      console.error("Wallet authentication button error", error);
       setIsPending(false);
       return;
     }
@@ -31,12 +32,12 @@ export const AuthButton = () => {
 
   useEffect(() => {
     const authenticate = async () => {
-      if (isInstalled && !isPending) {
+      if (isInstalled && !isPending && !session) {
         setIsPending(true);
         try {
           await walletAuth();
         } catch (error) {
-          console.error('Auto wallet authentication error', error);
+          console.error("Auto wallet authentication error", error);
         } finally {
           setIsPending(false);
         }
@@ -44,16 +45,16 @@ export const AuthButton = () => {
     };
 
     authenticate();
-  }, [isInstalled, isPending]);
+  }, [isInstalled, isPending, session]);
 
   return (
     <LiveFeedback
       label={{
-        failed: 'Failed to login',
-        pending: 'Logging in...',
-        success: 'Logged in',
+        failed: "Failed to login",
+        pending: "Logging in...",
+        success: "Logged in",
       }}
-      state={isPending ? 'pending' : undefined}
+      state={isPending ? "pending" : undefined}
     >
       <Button
         onClick={onClick}
