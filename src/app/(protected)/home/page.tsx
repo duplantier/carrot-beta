@@ -78,7 +78,7 @@ export default async function Home() {
                       </h3>
                     </div>
 
-                    <p className=" text-sm text-left mb-8 leading-relaxed ">
+                    <p className=" text-sm text-left text-gray-500 mb-8 leading-relaxed ">
                       {feature.description}
                     </p>
                   </div>
