@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Marble, TopBar } from "@worldcoin/mini-apps-ui-kit-react";
 import { MiniKit } from "@worldcoin/minikit-js";
-import { ChevronRight, Hammer, Target, Trophy } from "lucide-react";
+import { ChevronRight, CircleUser, Hammer, Target, Trophy } from "lucide-react";
 import { GlassCard } from "@/components/glass-card";
 import Link from "next/link";
 import Image from "next/image";
@@ -47,6 +47,7 @@ const features = [
 
 export default async function Home() {
   const session = await auth();
+  const username = MiniKit.user.username;
   const user = await MiniKit.getUserInfo();
 
   return (
@@ -62,10 +63,14 @@ export default async function Home() {
           />
         </Link>
         <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold capitalize text-gray-900">
+          <p className="text-sm text-gray-600">
             {session?.user.username || "Username"}
           </p>
-          <Marble src={session?.user.profilePictureUrl} className="w-12" />
+         {/*  {session?.user.profilePictureUrl ? (
+            <Marble src={session?.user.profilePictureUrl} className="w-12" />
+          ) : (
+            <CircleUser className="w-8 h-8 text-gray-500" />
+          )} */}
         </div>
       </header>
       <Page.Main className="container mx-auto px-4 py-12 flex justify-center items-center flex-col">
