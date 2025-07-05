@@ -6,7 +6,15 @@ import React from "react";
 
 const ProtectedHeader = async () => {
   const session = await auth();
-  const user = await MiniKit.getUserByUsername(session?.user?.username || "");
+  let user;
+  try {
+    user = (await MiniKit.getUserByUsername(session?.user?.username || "")) || {
+      walletAddress: "0x123456789",
+    };
+  } catch (error) {
+    console.error("Error fetching user data: ", error);
+    user = { walletAddress: "0x123456789" };
+  }
   return (
     <header className="px-6 py-4  flex justify-between items-center">
       <Link href="/home">
