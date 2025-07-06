@@ -130,7 +130,7 @@ export default function QuestCard({
       <CardContent className="space-y-4">
         <div>
           <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-            {quest.title}
+            <b> {quest.title}</b>
           </h3>
           <p className="text-gray-600 text-sm leading-relaxed">
             {quest.description}

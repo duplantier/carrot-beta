@@ -44,9 +44,11 @@ export default async function Home() {
   return (
     <main className=" mx-auto px-4 py-12 flex justify-center items-center flex-col">
       <div className="text-center mb-12">
-        <div className="text-5xl tracking-tight leading-10  mb-6 bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 to-orange-500">
-          <h1 className="font-bold">Engage & Earn.</h1>
-          <h4 className="font-light">Simple is that.</h4>
+        <div className=" tracking-tight leading-18 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 to-orange-500">
+          <h1 className="text-6xl">
+            <b>Engage & Earn.</b>
+          </h1>
+          <h4 className="font-light text-2xl">Simple is that.</h4>
         </div>
 
         <div className="text-lg text-gray-400 max-w-3xl mx-auto mb-8 leading-relaxed">
@@ -71,7 +73,7 @@ export default async function Home() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xl font-extrabold flex items-center">
-                        {feature.title}
+                        <b>{feature.title}</b>
                         {feature.title === "Live Quizzes" && (
                           <ComingSoon description="Live Quizzes are not available yet! When they are available, you will be able to join them and compete with others for prizes." />
                         )}
