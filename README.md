@@ -192,11 +192,11 @@ graph TD
 
 This modular approach allows us to rapidly adapt to new opportunities in the Web3 space while maintaining backward compatibility and security.
 
-## 🚀 Deployment & Developer Guide
+## Deployment & Developer Guide
 
 ### III. Current Features
 
-#### ✅ **Implemented Functionality**
+#### **Implemented Functionality**
 
 - **Quest Management**
   - Create quests with participant limits
@@ -227,7 +227,7 @@ This modular approach allows us to rapidly adapt to new opportunities in the Web
   - Username uniqueness enforcement
   - Balance and transfer validation
 
-#### 📊 **Smart Contract Metrics**
+#### **Smart Contract Metrics**
 - **Test Coverage**: 13/13 tests passing (100%)
 - **Gas Optimization**: Efficient struct packing
 - **Security**: Zero known vulnerabilities
@@ -235,9 +235,9 @@ This modular approach allows us to rapidly adapt to new opportunities in the Web
 
 ---
 
-### 🔮 Future Features
+### Future Features
 
-#### 🎯 **Planned Enhancements**
+#### **Planned Enhancements**
 
 
 - **Advanced Quest Types**
@@ -289,21 +289,21 @@ This modular approach allows us to rapidly adapt to new opportunities in the Web
 
 ---
 
-### 📱 Demo & Screenshots
+###  Demo & Screenshots
 
-#### 🎮 **Live Demo**
+####  **Live Demo**
 - **Contract Address**: `0x3EBc2a9Fc2b47445AAdb2004cAE4FeCFb8e0Fba6`
 - **Network**: World Chain Sepolia Testnet
 - **Explorer**: [View on BlockScout](https://worldchain-sepolia.blockscout.com/address/0x3EBc2a9Fc2b47445AAdb2004cAE4FeCFb8e0Fba6)
 
-#### 🖼️ **Integration Flow**
+#### **Integration Flow**
 ```
 Frontend ➜ Quest Contract ➜ World Chain ➜ User Wallets
     ↓           ↓               ↓            ↓
   Quiz UI → Join Quest → Validate → Distribute Rewards
 ```
 
-#### 📈 **Expected User Journey**
+#### **Expected User Journey**
 1. **Connect Wallet** → World ID verification
 2. **Join Quest** → Username registration
 3. **Complete Challenge** → Submit proof
@@ -323,7 +323,7 @@ foundryup
 node --version  # v18+ recommended
 ```
 
-#### 📦 **Clone & Setup**
+#### **Clone & Setup**
 ```bash
 # Clone repository
 git clone https://github.com/mertcicekci0/ETHCannesContract.git
@@ -348,7 +348,7 @@ forge test -vvv
 forge test --match-test testJoinQuest
 ```
 
-#### 🚀 **Local Development**
+#### **Local Development**
 ```bash
 # Start local node
 anvil
@@ -360,7 +360,7 @@ forge script script/DeployQuest.s.sol:DeployQuest --rpc-url http://localhost:854
 cast call <CONTRACT_ADDRESS> "getTotalParticipants()" --rpc-url http://localhost:8545
 ```
 
-#### 🌐 **Testnet Deployment**
+#### **Testnet Deployment**
 ```bash
 # Setup environment
 cp .env.example .env
