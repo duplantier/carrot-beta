@@ -290,6 +290,22 @@ This modular approach allows us to rapidly adapt to new opportunities in the Web
 ---
 
 ###  Demo & Screenshots
+### 📸 Screenshots
+
+![Screenshot 1](public/1.jpeg)
+![Screenshot 2](public/2.jpeg)
+![Screenshot 3](public/3.jpeg)
+![Screenshot 4](public/4.jpeg)
+![Screenshot 5](public/5.jpeg)
+![Screenshot 6](public/6.jpeg)
+![Screenshot 7](public/7.jpeg)
+![Screenshot 8](public/8.jpeg)
+![Screenshot 9](public/9.jpeg)
+![Screenshot 10](public/10.jpeg)
+![Screenshot 11](public/11.jpeg)
+![Screenshot 13](public/13.jpeg)
+![Screenshot 14](public/14.jpeg)
+![Screenshot 15](public/15.jpeg)
 
 ####  **Live Demo**
 - **Contract Address**: `0xFb5d825aF1Cedd96b995Eba9D125B4b89F8314a2`
@@ -399,7 +415,7 @@ A: The current version is not upgradeable. Future modular versions will support 
 
 #### 🏗️ **Core Development Team**
 - **Full Stack Developer** [Hüseyin Karataş](https://github.com/mertcicekci0)
-- **Smart Contract**: [Mert Çiçekci](https://github.com/mertcicekci0)
+- **Smart Contract Developer**: [Mert Çiçekci](https://github.com/duplantier)
 - **Frontend Integration**: Team Frontend Developer
 - **Backend API**: Team Backend Developer
 
