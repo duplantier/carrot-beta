@@ -4,6 +4,7 @@ import { Button, LiveFeedback } from "@worldcoin/mini-apps-ui-kit-react";
 import { useMiniKit } from "@worldcoin/minikit-js/minikit-provider";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 
 /**
  * This component is an example of how to authenticate a user
@@ -56,14 +57,35 @@ export const AuthButton = () => {
       }}
       state={isPending ? "pending" : undefined}
     >
-      <Button
-        onClick={onClick}
-        disabled={isPending}
-        size="lg"
-        variant="primary"
-      >
-        Login with Wallet
-      </Button>
+      <div className="flex flex-col items-center justify-center gap-6">
+        <div className="flex flex-col items-center justify-center gap-2">
+          <Image
+            src={"/carrot-logo.svg"}
+            alt="Carrot"
+            width={200}
+            height={200}
+          />
+          <p className="text-gray-600 text-xs">
+            Engage & Earn. Simple is that.
+          </p>
+        </div>
+        <Button
+          onClick={onClick}
+          disabled={isPending}
+          size="lg"
+          variant="primary"
+          className="flex items-center gap-2 text-sm hover:!bg-gradient-to-r hover:!from-yellow-500 hover:!to-orange-600"
+        >
+          <Image
+            src="/world-logo.jpg"
+            alt="World ID"
+            className="rounded-full"
+            width={30}
+            height={30}
+          />
+          <h6>Verify with World ID</h6>
+        </Button>
+      </div>
     </LiveFeedback>
   );
 };
