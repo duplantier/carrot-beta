@@ -414,8 +414,8 @@ A: The current version is not upgradeable. Future modular versions will support 
 ### 👥 Contributors
 
 #### 🏗️ **Core Development Team**
-- **Full Stack Developer** [Hüseyin Karataş](https://github.com/mertcicekci0)
-- **Smart Contract Developer**: [Mert Çiçekci](https://github.com/duplantier)
+- **Full Stack Developer** [Hüseyin Karataş](https://github.com/duplantier)
+- **Smart Contract Developer**: [Mert Çiçekci](https://github.com/mertcicekci0)
 - **Frontend Integration**: Team Frontend Developer
 - **Backend API**: Team Backend Developer
 
