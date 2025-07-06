@@ -12,6 +12,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ComingSoon from "@/components/coming-soon";
 import ProtectedHeader from "@/components/protected-header";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 
 const features = [
   {
@@ -43,10 +44,15 @@ const features = [
 export default async function Home() {
   return (
     <main className=" mx-auto px-4 py-12 flex justify-center items-center flex-col">
+      {/* Welcome Banner */}
+      <div className="w-full max-w-4xl mx-auto mb-8">
+        <WelcomeBanner />
+      </div>
+
       <div className="text-center mb-12">
         <div className=" tracking-tight leading-18 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-yellow-500 to-orange-500">
           <h1 className="text-6xl">
-            <b>Engage & Earn.</b>
+            <b>Verify & Engage & Earn</b>
           </h1>
           <h4 className="font-light text-2xl">Simple is that.</h4>
         </div>
@@ -75,7 +81,10 @@ export default async function Home() {
                       <h3 className="text-xl font-extrabold flex items-center">
                         <b>{feature.title}</b>
                         {feature.title === "Live Quizzes" && (
-                          <ComingSoon description="Live Quizzes are not available yet! When they are available, you will be able to join them and compete with others for prizes." />
+                          <ComingSoon description="Live Quizzes are not available in BETA version! When they are available, you will be able to join them and compete with others for prizes." />
+                        )}
+                        {feature.title === "Stake & Build & Earn" && (
+                          <ComingSoon description="Stake & Build & Earn is not available in BETA version! We will be adding this feature soon." />
                         )}
                       </h3>
                     </div>
@@ -86,7 +95,12 @@ export default async function Home() {
                   </div>
 
                   <Link
-                    href={feature.title === "Live Quizzes" ? "#" : feature.href}
+                    href={
+                      feature.title === "Live Quizzes" ||
+                      feature.title === "Stake & Build & Earn"
+                        ? "#"
+                        : feature.href
+                    }
                     className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 border  backdrop-blur-sm py-2 text-white font-semibold rounded-xl flex justify-center items-center gap-2 cursor-pointer"
                   >
                     <span className="text-white">Get Started</span>

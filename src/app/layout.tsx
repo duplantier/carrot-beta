@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Carrot - Engage & Earn.",
+  title: "Carrot - Verify &Engage & Earn",
   description:
     "Web3-based community engagement tools for blockchain companies.",
 };

@@ -1,9 +1,25 @@
 export const mockQuests = [
   {
+    id: "1",
+    title: "ChainLink Announcement",
+    description: "Share ChainLink's latest announcement on social media",
+    organization: "ChainLink",
+    organizationLogo: "/chainlink-logo.svg",
+    poolPrize: 100,
+    prizeCurrency: "ETH",
+    maxParticipants: 10,
+    contractAddress: "0xFb5d825aF1Cedd96b995Eba9D125B4b89F8314a2", // Updated to new fixed contract
+    requirements: ["Follow @chainlink on Twitter", "Retweet the announcement"],
+    category: "Social Media",
+    difficulty: "Easy",
+    timeToComplete: "5 minutes",
+    tags: ["ChainLink", "Social", "Announcement"],
+  },
+  {
     id: 15,
     type: "join_community",
     title: "Join the Worldcoin Discord",
-    contractAddress: "0x1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B", // Mock contract address
+    contractAddress: "0x907ed4a77B9a1503BF4dBC85944Ad3CF6C756397", // Contract 1
     organization: "World",
     organizationLogo: "/world-logo.jpg",
     poolPrize: 50,
@@ -17,7 +33,7 @@ export const mockQuests = [
     id: 16,
     type: "tutorial_creation",
     title: "Create a World ID Integration Tutorial",
-    contractAddress: "0x2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C", // Mock contract address
+    contractAddress: "0xFb5d825aF1Cedd96b995Eba9D125B4b89F8314a2", // Updated to new fixed contract
     organization: "World",
     organizationLogo: "/world-logo.jpg",
     poolPrize: 0.05,
@@ -31,7 +47,7 @@ export const mockQuests = [
     id: 17,
     type: "governance_vote",
     title: "Participate in Worldcoin Governance",
-    contractAddress: "0x3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D", // Mock contract address
+    contractAddress: "0xeD05437830F2d006DE354b988F89Dc56c380806E", // Contract 3
     organization: "World",
     organizationLogo: "/world-logo.jpg",
     poolPrize: 120,
@@ -45,7 +61,7 @@ export const mockQuests = [
     id: 6,
     type: "quote_tweet",
     title: "Quote A Tweet",
-    contractAddress: "0x4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E", // Mock contract address
+    contractAddress: "0x22FBBbbC04cC241967fF3bBc9BE624dDcc7c8e83", // Contract 4
     organization: "World",
     organizationLogo: "/world-logo.jpg",
     poolPrize: 100,
@@ -59,7 +75,7 @@ export const mockQuests = [
     id: 1,
     type: "quote_tweet",
     title: "Amplify Our Latest Announcement",
-    contractAddress: "0x5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F", // Mock contract address
+    contractAddress: "0x684112717a2c2CB3a2DB05988CFBA885046908BD", // Contract 5
     organization: "ChainLink Labs",
     organizationLogo: "/chainlink-logo.svg",
     poolPrize: 150,
@@ -73,7 +89,7 @@ export const mockQuests = [
     id: 2,
     type: "referral",
     title: "Invite New Users to Our Community",
-    contractAddress: "0x6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A", // Mock contract address
+    contractAddress: "0xa02f35c0998515220b9832AD2E1e3b2fdb267745", // Contract 6
     organization: "Solana Foundation",
     organizationLogo: "/solana-logo.svg",
     poolPrize: 300,
@@ -87,7 +103,7 @@ export const mockQuests = [
     id: 3,
     type: "quiz",
     title: "Test Your Blockchain Knowledge",
-    contractAddress: "0x7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B", // Mock contract address
+    contractAddress: "0x755bfb308CAbE3980C0228dEB07e0EE8Af2D53aE", // Contract 7
     organization: "Ethereum Foundation",
     organizationLogo: "/ethereum-foundation-logo.svg",
     poolPrize: 0.3,
@@ -101,7 +117,7 @@ export const mockQuests = [
     id: 4,
     type: "video_creation",
     title: "Create a Short Explainer Video",
-    contractAddress: "0x8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C", // Mock contract address
+    contractAddress: "0x2dBfF5b656115981D869c3Dc828AcE866025957e", // Contract 8
     organization: "Avalanche Network",
     organizationLogo: "/avalanche-logo.svg",
     poolPrize: 750,
@@ -115,7 +131,7 @@ export const mockQuests = [
     id: 5,
     type: "feedback_submission",
     title: "Give Feedback on Our Beta DApp",
-    contractAddress: "0x9C0D1E2F3A4B5C6D7E8F9A0B1C2D3E4F5A6B7C8D", // Mock contract address
+    contractAddress: "0x610FB9e04605367E5016bd07b4DcB965D5616a76", // Contract 9
     organization: "Oasis Network",
     organizationLogo: "/oasis-logo.svg",
     poolPrize: 0.4,
@@ -129,7 +145,7 @@ export const mockQuests = [
     id: 7,
     type: "swap_challenge",
     title: "Execute a Swap on 1inch",
-    contractAddress: "0xA0B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9", // Mock contract address
+    contractAddress: "0x76AD19634e3C029E29ef366a589EB7B4856eA6ba", // Contract 10
     organization: "1inch Network",
     organizationLogo: "/1inch-logo.png",
     poolPrize: 120,
@@ -143,7 +159,7 @@ export const mockQuests = [
     id: 8,
     type: "research_summary",
     title: "Summarize Our Latest AI Research",
-    contractAddress: "0xB1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0", // Mock contract address
+    contractAddress: "0xbC4d8FE8B24d582023b0f9aC333f249dA778e1Be", // Contract 11
     organization: "ASI Alliance",
     organizationLogo: "/asi-alliance-logo.png",
     poolPrize: 0.2,
@@ -157,7 +173,7 @@ export const mockQuests = [
     id: 9,
     type: "data_provider_challenge",
     title: "Explore Flare's Data Oracles",
-    contractAddress: "0xC2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1", // Mock contract address
+    contractAddress: "0x44d04aD1bc74D8Fcce333c18921e64435fD24a55", // Contract 12
     organization: "Flare Network",
     organizationLogo: "/flare-network-logo.png",
     poolPrize: 180,
@@ -171,7 +187,7 @@ export const mockQuests = [
     id: 10,
     type: "privacy_advocacy",
     title: "Champion Digital Privacy",
-    contractAddress: "0xD3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2", // Mock contract address
+    contractAddress: "0xd59a14464dD3c9db1F6C5106a009dA682698649B", // Contract 13
     organization: "Self Protocol",
     organizationLogo: "/self-protocol-logo.png",
     poolPrize: 220,
@@ -185,7 +201,7 @@ export const mockQuests = [
     id: 11,
     type: "zk_explainer",
     title: "Demystify Zircuit's ZK-Rollup",
-    contractAddress: "0xE4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2F3", // Mock contract address
+    contractAddress: "0xBCd01A7fDda6b937181B56C42429A0Ad3af91Dfb", // Contract 14
     organization: "Zircuit",
     organizationLogo: "/zircuit-logo.png",
     poolPrize: 0.1,
@@ -199,7 +215,7 @@ export const mockQuests = [
     id: 12,
     type: "wallet_onboarding",
     title: "Onboard a Friend to Walrus Wallet",
-    contractAddress: "0xF5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2F3A4", // Mock contract address
+    contractAddress: "0x3b1FD9Cb173924123Dc55284a79d675a38d0BC11", // Contract 15
     organization: "Walrus Wallet",
     organizationLogo: "/walrus-logo.png",
     poolPrize: 100,
@@ -213,7 +229,7 @@ export const mockQuests = [
     id: 13,
     type: "usdc_adoption",
     title: "Share Your USDC Use Case",
-    contractAddress: "0xA6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2F3A4B5", // Mock contract address
+    contractAddress: "0xC591071839BfC4Fbb6bbd75F0C4074153a6e2084", // Original contract (reused)
     organization: "Circle",
     organizationLogo: "/circle-logo.png",
     poolPrize: 90,
@@ -227,7 +243,7 @@ export const mockQuests = [
     id: 14,
     type: "nft_showcase",
     title: "Showcase Your Flow NFT",
-    contractAddress: "0xB7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6", // Mock contract address
+    contractAddress: "0xC591071839BfC4Fbb6bbd75F0C4074153a6e2084", // Original contract (reused)
     organization: "Flow Blockchain",
     organizationLogo: "/flow-logo.png",
     poolPrize: 170,

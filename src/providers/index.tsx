@@ -7,6 +7,10 @@ import { SessionProvider } from "next-auth/react";
 import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 import { WagmiProvider } from "wagmi";
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import '@rainbow-me/rainbowkit/styles.css';
+import { NetworkProvider } from "./NetworkProvider";
+import { worldchainSepolia } from "@/config";
 
 const ErudaProvider = dynamic(
   () => import("@/providers/Eruda").then((c) => c.ErudaProvider),
@@ -29,6 +33,12 @@ interface ClientProvidersProps {
  * - MiniKitProvider:
  *     - Required for MiniKit functionality.
  *
+ * - RainbowKitProvider:
+ *     - Provides wallet connection UI and management.
+ *
+ * - NetworkProvider:
+ *     - Automatically switches to World Chain Sepolia on app load.
+ *
  * This component ensures both providers are available to all child components.
  */
 export default function ClientProviders({
@@ -41,9 +51,13 @@ export default function ClientProviders({
     <ErudaProvider>
       <WagmiProvider config={config as any}>
         <QueryClientProvider client={queryClient}>
-          <MiniKitProvider>
-            <SessionProvider session={session}>{children}</SessionProvider>
-          </MiniKitProvider>
+          <RainbowKitProvider initialChain={worldchainSepolia}>
+            <NetworkProvider>
+              <MiniKitProvider>
+                <SessionProvider session={session}>{children}</SessionProvider>
+              </MiniKitProvider>
+            </NetworkProvider>
+          </RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </ErudaProvider>

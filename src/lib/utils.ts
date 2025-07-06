@@ -15,6 +15,15 @@ export interface QuestParticipation {
   joinedAt: string;
 }
 
+export interface QuestSubmission {
+  questId: string;
+  questContractAddress: string;
+  proofUrl: string;
+  messageHash: string | null;
+  transactionHash: string;
+  submittedAt: string;
+}
+
 export function setCookie(name: string, value: string, days: number = 30) {
   const expires = new Date();
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
@@ -37,9 +46,9 @@ export function saveQuestParticipation(participation: QuestParticipation) {
     // Get existing participations
     const existingParticipations = getQuestParticipations();
     
-    // Check if user already participated in this quest
+    // Check if user already participated in this specific quest (using both ID and contract address)
     const existingIndex = existingParticipations.findIndex(
-      p => p.questId === participation.questId
+      p => p.questId === participation.questId && p.questContractAddress === participation.questContractAddress
     );
     
     let updatedParticipations: QuestParticipation[];
@@ -75,16 +84,16 @@ export function getQuestParticipations(): QuestParticipation[] {
   }
 }
 
-export function hasUserParticipatedInQuest(questId: string): boolean {
+export function hasUserParticipatedInQuest(questId: string, contractAddress: string): boolean {
   const participations = getQuestParticipations();
-  return participations.some(p => p.questId === questId);
+  return participations.some(p => p.questId === questId && p.questContractAddress === contractAddress);
 }
 
-export function removeQuestParticipation(questId: string) {
+export function removeQuestParticipation(questId: string, contractAddress: string) {
   try {
     const existingParticipations = getQuestParticipations();
     const updatedParticipations = existingParticipations.filter(
-      p => p.questId !== questId
+      p => !(p.questId === questId && p.questContractAddress === contractAddress)
     );
     
     setCookie('questParticipations', JSON.stringify(updatedParticipations));
@@ -101,6 +110,80 @@ export function clearAllQuestParticipations() {
     return true;
   } catch (error) {
     console.error('Error clearing quest participations:', error);
+    return false;
+  }
+}
+
+// Quest submission tracking functions
+export function saveQuestSubmission(submission: QuestSubmission) {
+  try {
+    // Get existing submissions
+    const existingSubmissions = getQuestSubmissions();
+    
+    // Check if user already submitted for this specific quest (using both ID and contract address)
+    const existingIndex = existingSubmissions.findIndex(
+      s => s.questId === submission.questId && s.questContractAddress === submission.questContractAddress
+    );
+    
+    let updatedSubmissions: QuestSubmission[];
+    
+    if (existingIndex !== -1) {
+      // Update existing submission
+      updatedSubmissions = [...existingSubmissions];
+      updatedSubmissions[existingIndex] = submission;
+    } else {
+      // Add new submission
+      updatedSubmissions = [...existingSubmissions, submission];
+    }
+    
+    // Save to cookie
+    setCookie('questSubmissions', JSON.stringify(updatedSubmissions));
+    
+    return true;
+  } catch (error) {
+    console.error('Error saving quest submission:', error);
+    return false;
+  }
+}
+
+export function getQuestSubmissions(): QuestSubmission[] {
+  try {
+    const submissionsCookie = getCookie('questSubmissions');
+    if (!submissionsCookie) return [];
+    
+    return JSON.parse(submissionsCookie);
+  } catch (error) {
+    console.error('Error parsing quest submissions:', error);
+    return [];
+  }
+}
+
+export function hasUserSubmittedProofForQuest(questId: string, contractAddress: string): boolean {
+  const submissions = getQuestSubmissions();
+  return submissions.some(s => s.questId === questId && s.questContractAddress === contractAddress);
+}
+
+export function removeQuestSubmission(questId: string, contractAddress: string) {
+  try {
+    const existingSubmissions = getQuestSubmissions();
+    const updatedSubmissions = existingSubmissions.filter(
+      s => !(s.questId === questId && s.questContractAddress === contractAddress)
+    );
+    
+    setCookie('questSubmissions', JSON.stringify(updatedSubmissions));
+    return true;
+  } catch (error) {
+    console.error('Error removing quest submission:', error);
+    return false;
+  }
+}
+
+export function clearAllQuestSubmissions() {
+  try {
+    setCookie('questSubmissions', '[]');
+    return true;
+  } catch (error) {
+    console.error('Error clearing quest submissions:', error);
     return false;
   }
 }

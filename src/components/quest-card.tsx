@@ -2,10 +2,15 @@
 import {
   MiniKit,
   SignMessageInput,
-  VerificationLevel,
-  VerifyCommandInput,
 } from "@worldcoin/minikit-js";
-import { useWriteContract } from "wagmi";
+import {
+  useWriteContract,
+  useReadContract,
+  useAccount,
+  useSwitchChain,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
 import { mockQuests } from "@/lib/mocks/mock-quests";
@@ -17,7 +22,10 @@ import { useState, useEffect } from "react";
 import {
   saveQuestParticipation,
   hasUserParticipatedInQuest,
+  saveQuestSubmission,
+  hasUserSubmittedProofForQuest,
   type QuestParticipation,
+  type QuestSubmission,
 } from "@/lib/utils";
 
 import {
@@ -46,15 +54,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockSubmissions } from "@/lib/mocks/mock-submissions";
 import Link from "next/link";
 import { questContractAbi } from "@/abi/quest-contract-abi";
+import { worldchainSepolia } from "@/config";
 
 const sendQuestProofSchema = z.object({
   proofLink: z.string().min(2).max(100),
 });
 
-const verifyPayload: VerifyCommandInput = {
-  action: "join-quest",
-  verification_level: VerificationLevel.Device,
-};
+// Type for User struct from smart contract
+interface User {
+  walletAddress: string;
+  username: string;
+  submission: string;
+  isParticipant: boolean;
+}
 
 export default function QuestCard({
   quest,
@@ -71,9 +83,68 @@ export default function QuestCard({
   const isAlmostFull = participationPercentage > 80;
   const isFull = participationPercentage >= 100;
   const [messageHash, setMessageHash] = useState<string | null>(null);
-  const [verifyProof, setVerifyProof] = useState<string | null>(null);
   const [hasParticipated, setHasParticipated] = useState<boolean>(false);
+  const [hasSubmittedProof, setHasSubmittedProof] = useState<boolean>(false);
   const [isJoining, setIsJoining] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSendingPrize, setIsSendingPrize] = useState<boolean>(false);
+  const [allParticipants, setAllParticipants] = useState<User[]>([]);
+  const [contractParticipantCount, setContractParticipantCount] =
+    useState<number>(0);
+
+  const { writeContract, isPending: isWritePending, isSuccess, isError, data: transactionHash, error } = useWriteContract();
+  const { isConnected, address, chain } = useAccount();
+  const { switchChain } = useSwitchChain();
+  const session = useSession();
+
+  // Wait for transaction receipt
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: transactionHash,
+  });
+
+  // Debug session data
+  useEffect(() => {
+    console.log("Session data:", session.data);
+    console.log("User wallet address:", session.data?.user?.walletAddress);
+    console.log("Session status:", session.status);
+    console.log("Wagmi connected:", isConnected);
+    console.log("Wagmi address:", address);
+    console.log("Wagmi chain:", chain);
+  }, [session, isConnected, address, chain]);
+
+  // Check authentication and wallet connection
+  const isAuthenticated = !!session.data?.user?.walletAddress;
+  const isCorrectNetwork = chain?.id === worldchainSepolia.id;
+  const isReadyToInteract = isAuthenticated && isConnected && isCorrectNetwork;
+
+  // Add network switching state for immediate UI feedback
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
+
+  // Read contract functions
+  const { data: participantCount } = useReadContract({
+    abi: questContractAbi,
+    address: quest.contractAddress as `0x${string}`,
+    functionName: "getTotalParticipants",
+    chainId: worldchainSepolia.id,
+  });
+
+  const { data: isUserParticipant } = useReadContract({
+    abi: questContractAbi,
+    address: quest.contractAddress as `0x${string}`,
+    functionName: "isParticipant",
+    args: [address as `0x${string}`],
+    chainId: worldchainSepolia.id,
+    query: {
+      enabled: !!address, // Only run query if address is available
+    },
+  });
+
+  const { data: contractOwner } = useReadContract({
+    abi: questContractAbi,
+    address: quest.contractAddress as `0x${string}`,
+    functionName: "owner",
+    chainId: worldchainSepolia.id,
+  });
 
   const form = useForm<z.infer<typeof sendQuestProofSchema>>({
     resolver: zodResolver(sendQuestProofSchema),
@@ -82,72 +153,98 @@ export default function QuestCard({
     },
   });
 
-  async function onSubmitProofLink(
-    values: z.infer<typeof sendQuestProofSchema>
-  ) {
-    console.log(values);
-    // 1. Verify
-    if (!MiniKit.isInstalled()) {
-      toast.error("World App is not installed!");
-      return;
-    }
-
-    const { finalPayload } = await MiniKit.commandsAsync.verify(verifyPayload);
-
-    if (finalPayload.status === "error") {
-      toast.error("Error verifying proof!");
-      return;
-    }
-
-    const verifyResponse = await fetch("/api/verify-proof", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const verifyResponseJson = await verifyResponse.json();
-
-    if (verifyResponseJson.status === 200) {
-      toast.success("Proof sent successfully!");
-    } else {
-      toast.error("Failed to send proof!");
-    }
-
-    // 2. Sign message
-    const messageToSign: SignMessageInput = {
-      message: `You are confirming that you are sending the proof for the "${quest.title}" of ${quest.organization}. This action does not mean any money transaction.`,
-    };
-
-    const { finalPayload: signMessagePayload }: any =
-      await MiniKit.commandsAsync.signMessage(messageToSign);
-
-    if (signMessagePayload.status === "error") {
-      toast.error("Error signing message!");
-      return;
-    }
-
-    const userMessageHash = hashSafeMessage(messageToSign.message);
-    setMessageHash(userMessageHash);
-
-    // 3. Interact with the smart contract address of the quest
-    const tx = writeContract({
-      abi: [],
-      address: quest.contractAddress as `0x${string}`,
-      functionName: "submitProof",
-      args: [user.walletAddress, values.proofLink],
-    });
-
-    console.log("Transaction", tx);
-  }
-
-  const { writeContract } = useWriteContract();
-
-  // Check if user has already participated in this quest
+  // Update contract participant count when it changes
   useEffect(() => {
-    setHasParticipated(hasUserParticipatedInQuest(quest.id.toString()));
-  }, [quest.id]);
+    if (participantCount !== undefined) {
+      setContractParticipantCount(Number(participantCount));
+    }
+  }, [participantCount]);
 
+  // Check if user has already participated in this quest (using both ID and contract address)
+  useEffect(() => {
+    const localParticipation = hasUserParticipatedInQuest(quest.id.toString(), quest.contractAddress);
+    const contractParticipation = isUserParticipant === true;
+
+    setHasParticipated(localParticipation || contractParticipation || false);
+  }, [quest.id, quest.contractAddress, isUserParticipant]);
+
+  // Check if user has already submitted proof for this quest
+  useEffect(() => {
+    const hasSubmitted = hasUserSubmittedProofForQuest(quest.id.toString(), quest.contractAddress);
+    setHasSubmittedProof(hasSubmitted);
+  }, [quest.id, quest.contractAddress]);
+
+  // Handle transaction success/error
+  useEffect(() => {
+    if (isSuccess && transactionHash) {
+      console.log("Transaction successful:", transactionHash);
+      toast.success("Transaction submitted successfully!");
+
+      // Check if this was a join quest or submit proof transaction
+      // We determine this by checking the current submitting state
+      if (isSubmitting) {
+        // This was a submit proof transaction
+        const userSubmission: QuestSubmission = {
+          questId: quest.id.toString(),
+          questContractAddress: quest.contractAddress,
+          proofUrl: "Transaction completed", // We can't access form data after reset
+          messageHash: messageHash,
+          transactionHash: transactionHash,
+          submittedAt: new Date().toISOString(),
+        };
+
+        const saveSuccess = saveQuestSubmission(userSubmission);
+        if (saveSuccess) {
+          setHasSubmittedProof(true);
+          toast.success("Proof submitted successfully!");
+        } else {
+          toast.error("Failed to save your submission. Please try again.");
+        }
+      } else if (isJoining) {
+        // This was a join quest transaction
+        const userParticipation: QuestParticipation = {
+          questId: quest.id.toString(),
+          questContractAddress: quest.contractAddress,
+          messageHash: messageHash,
+          verifyProof: null,
+          transactionHash: transactionHash,
+          joinedAt: new Date().toISOString(),
+        };
+
+        const saveSuccess = saveQuestParticipation(userParticipation);
+        if (saveSuccess) {
+          setHasParticipated(true);
+          toast.success("Quest joined successfully! Your participation has been saved.");
+        } else {
+          toast.error("Failed to save your participation. Please try again.");
+        }
+      }
+      
+      setIsJoining(false);
+      setIsSubmitting(false);
+    }
+  }, [isSuccess, transactionHash, quest.id, quest.contractAddress, messageHash, isSubmitting, isJoining]);
+
+  useEffect(() => {
+    if (isError && error) {
+      console.error("Transaction failed:", error);
+      toast.error(`Transaction failed: ${error.message || "Please try again."}`);
+      setIsJoining(false);
+      setIsSubmitting(false);
+    }
+  }, [isError, error]);
+
+  useEffect(() => {
+    if (isConfirmed) {
+      toast.success("Transaction confirmed on blockchain!");
+    }
+  }, [isConfirmed]);
+
+  /**
+   * 1. JOIN QUEST FUNCTION
+   * Calls the smart contract's joinQuest function
+   * Requires: World ID authentication + Wallet connection + Correct network
+   */
   const joinQuest = async (quest: (typeof mockQuests)[0]) => {
     // Prevent joining if already participated or quest is full
     if (hasParticipated || isFull) {
@@ -159,45 +256,77 @@ export default function QuestCard({
       return;
     }
 
+    // Check if user is authenticated with World ID
+    if (!isAuthenticated) {
+      toast.error("Please authenticate with World ID first.");
+      return;
+    }
+
+    // Check if wallet is connected
+    if (!isConnected) {
+      toast.error("Please connect your wallet first.");
+      return;
+    }
+
+    // Check if on correct network
+    if (!isCorrectNetwork) {
+      toast.error("Please switch to World Chain Sepolia network.");
+      setIsSwitchingNetwork(true);
+      
+      // Add timeout for network switching
+      const networkSwitchTimeout = setTimeout(() => {
+        setIsSwitchingNetwork(false);
+        setIsJoining(false);
+        toast.error("Network switching timed out. Please try again.");
+      }, 10000); // 10 second timeout
+      
+      try {
+        await switchChain({ chainId: worldchainSepolia.id });
+        clearTimeout(networkSwitchTimeout);
+        toast.success("Successfully switched to World Chain Sepolia!");
+        setIsSwitchingNetwork(false);
+      } catch (error) {
+        clearTimeout(networkSwitchTimeout);
+        console.error("Failed to switch network:", error);
+        toast.error("Failed to switch network. Please try again.");
+        setIsSwitchingNetwork(false);
+        setIsJoining(false);
+        return;
+      }
+    }
+
     setIsJoining(true);
 
     try {
       const contractAddressOfTheQuest = quest.contractAddress;
-      // 1. Verify
-      if (!MiniKit.isInstalled()) {
-        toast.error("World App is not installed!");
+
+      // Validate required parameters
+      if (!address) {
+        toast.error("Wallet address not found. Please reconnect your wallet.");
         setIsJoining(false);
         return;
       }
-      // World App will open a drawer prompting the user to confirm the operation, promise is resolved once user confirms or cancels
-      const { finalPayload } = await MiniKit.commandsAsync.verify(
-        verifyPayload
-      );
-      if (finalPayload.status === "error") {
-        return console.log("Error payload", finalPayload);
+
+      if (!contractAddressOfTheQuest) {
+        toast.error("Quest contract address not found.");
+        setIsJoining(false);
+        return;
       }
 
-      // Verify the proof in the backend
-      const verifyResponse = await fetch("/api/verify-proof", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          payload: finalPayload, // Parses only the fields we need to verify
-          action: "join-quest",
-        }),
+      if (!username) {
+        toast.error("Username not found. Please re-authenticate.");
+        setIsJoining(false);
+        return;
+      }
+
+      console.log("Quest joining validation passed:", {
+        address,
+        contractAddress: contractAddressOfTheQuest,
+        username,
+        maxParticipants: quest.maxParticipants,
       });
 
-      // TODO: Handle Success!
-      const verifyResponseJson = await verifyResponse.json();
-      if (verifyResponseJson.status === 200) {
-        toast.success("Quest joined successfully!");
-        const userVerifyProof = verifyResponseJson.verifyRes.proof;
-        setVerifyProof(userVerifyProof);
-      }
-
-      // 2. Sign message
+      // 1. Sign message for quest participation
       const messageToSign: SignMessageInput = {
         message: `You are confirming that you are joining the "${quest.title}" of ${quest.organization}. This action does not mean any money transaction.`,
       };
@@ -208,61 +337,236 @@ export default function QuestCard({
       if (signMessagePayload.status === "success") {
         const userMessageHash = hashSafeMessage(messageToSign.message);
         setMessageHash(userMessageHash);
+      } else {
+        toast.error("Message signing failed!");
+        setIsJoining(false);
+        return;
       }
 
-      // 3. Interact with the smart contract address of the quest
-      // 3.1. Send user's walletAddress
-      // 3.2. Send username
-      // 3.2. Send maxParticipants (will be used to check if the quest is full)
-
-      // 4. If interaction is successful, update the currentParticipants + 1
-      // 4.1. Show the returned hash, etc.
-
-      const tx = writeContract({
-        abi: questContractAbi as any,
-        address: contractAddressOfTheQuest as `0x${string}`,
+      // 2. Call smart contract joinQuest function
+      console.log("Initiating writeContract with params:", {
+        abi: questContractAbi,
+        address: contractAddressOfTheQuest,
         functionName: "joinQuest",
-        args: [user.walletAddress, quest.maxParticipants, username],
+        args: [BigInt(quest.maxParticipants), username],
+        chainId: worldchainSepolia.id,
       });
 
-      console.log("Transaction", tx);
+      toast.info("Transaction initiated. Please confirm in your wallet.");
 
-      // 5. Save the user's participation in a cookie as an object
-      const userParticipation: QuestParticipation = {
-        questId: quest.id.toString(),
-        questContractAddress: quest.contractAddress,
-        messageHash: messageHash,
-        verifyProof: verifyProof,
-        transactionHash: "test-transaction-hash",
-        joinedAt: new Date().toISOString(),
-      };
-
-      // 6. Save the user's participation in a cookie
-      const saveSuccess = saveQuestParticipation(userParticipation);
-
-      if (saveSuccess) {
-        setHasParticipated(true);
-        toast.success(
-          "Quest joined successfully! Your participation has been saved."
-        );
-      } else {
-        toast.error("Failed to save your participation. Please try again.");
-      }
+      // Use wagmi v2 API - writeContract doesn't return a promise
+      writeContract({
+        abi: questContractAbi,
+        address: contractAddressOfTheQuest as `0x${string}`,
+        functionName: "joinQuest",
+        args: [BigInt(quest.maxParticipants), username],
+        chainId: worldchainSepolia.id,
+      });
     } catch (error) {
       console.error("Error joining quest:", error);
       toast.error("Failed to join quest. Please try again.");
-    } finally {
-      setIsJoining(false);
     }
   };
 
-  const acceptSubmission = (submission: (typeof mockSubmissions)[0]) => {
-    console.log("Accepting submission", submission);
+  /**
+   * 2. SUBMIT QUEST PROOF FUNCTION
+   * Calls the smart contract's addSubmission function
+   * Requires: World ID authentication + Wallet connection + Correct network
+   */
+  async function onSubmitProofLink(
+    values: z.infer<typeof sendQuestProofSchema>
+  ) {
+    setIsSubmitting(true);
+
+    try {
+      // Check if user is authenticated with World ID
+      if (!isAuthenticated) {
+        toast.error("Please authenticate with World ID first.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if wallet is connected
+      if (!isConnected) {
+        toast.error("Please connect your wallet first.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if user has participated in the quest
+      if (!hasParticipated) {
+        toast.error("You must join the quest before submitting proof.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Check if on correct network
+      if (!isCorrectNetwork) {
+        toast.error("Please switch to World Chain Sepolia network.");
+        try {
+          await switchChain({ chainId: worldchainSepolia.id });
+        } catch (error) {
+          console.error("Failed to switch network:", error);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      // 1. Sign message for proof submission
+      const messageToSign: SignMessageInput = {
+        message: `You are confirming that you are sending the proof for the "${quest.title}" of ${quest.organization}. This action does not mean any money transaction.`,
+      };
+
+      const { finalPayload: signMessagePayload }: any =
+        await MiniKit.commandsAsync.signMessage(messageToSign);
+
+      if (signMessagePayload.status === "error") {
+        console.error("Message signing failed:", signMessagePayload);
+        toast.error("Error signing message!");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const userMessageHash = hashSafeMessage(messageToSign.message);
+      setMessageHash(userMessageHash);
+
+      // 2. Call smart contract addSubmission function
+      writeContract({
+        abi: questContractAbi,
+        address: quest.contractAddress as `0x${string}`,
+        functionName: "addSubmission",
+        args: [values.proofLink],
+        chainId: worldchainSepolia.id,
+      });
+
+      // Success will be handled by useEffect hooks
+      toast.info("Proof submission initiated. Please confirm in your wallet.");
+      form.reset();
+    } catch (error) {
+      console.error("Error submitting proof:", error);
+      toast.error("Failed to submit proof. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  /**
+   * 3. SEND PRIZE FUNCTION
+   * Calls the smart contract's distributeQuestPrizes function
+   * NOTE: This function can only be called by the contract owner
+   */
+  const sendPrize = async (submission: (typeof mockSubmissions)[0]) => {
+    setIsSendingPrize(true);
+
+    try {
+      // Check if user is authenticated with World ID
+      if (!isAuthenticated) {
+        toast.error("Please authenticate with World ID first.");
+        setIsSendingPrize(false);
+        return;
+      }
+
+      // Check if wallet is connected
+      if (!isConnected) {
+        toast.error("Please connect your wallet first.");
+        setIsSendingPrize(false);
+        return;
+      }
+
+      // Check if the current user is the contract owner
+      if (
+        contractOwner &&
+        typeof contractOwner === "string" &&
+        contractOwner.toLowerCase() !== address?.toLowerCase()
+      ) {
+        toast.error("Only the contract owner can distribute prizes.");
+        setIsSendingPrize(false);
+        return;
+      }
+
+      // Check if on correct network
+      if (!isCorrectNetwork) {
+        toast.error("Please switch to World Chain Sepolia network.");
+        try {
+          await switchChain({ chainId: worldchainSepolia.id });
+        } catch (error) {
+          console.error("Failed to switch network:", error);
+          setIsSendingPrize(false);
+          return;
+        }
+      }
+
+      // Calculate prize amount per participant
+      const prizePerParticipant = quest.poolPrize / quest.maxParticipants;
+      const prizeAmountInWei = BigInt(
+        Math.floor(prizePerParticipant * 10 ** 18)
+      ); // Convert to wei
+
+      // Call smart contract distributeQuestPrizes function
+      writeContract({
+        abi: questContractAbi,
+        address: quest.contractAddress as `0x${string}`,
+        functionName: "distributeQuestPrizes",
+        args: [
+          submission.walletAddress as `0x${string}`,
+          prizeAmountInWei,
+          true,
+        ],
+        chainId: worldchainSepolia.id,
+      });
+
+      toast.info("Prize distribution initiated. Please confirm in your wallet.");
+    } catch (error) {
+      console.error("Error sending prize:", error);
+      toast.error("Failed to send prize. Please try again.");
+    } finally {
+      setIsSendingPrize(false);
+    }
   };
 
-  const sendPrize = (submission: (typeof mockSubmissions)[0]) => {
-    console.log("Sending prize to", submission);
+  /**
+   * 4. GET ALL PARTICIPANTS FUNCTION
+   * Retrieves all participants from the smart contract
+   */
+  const getAllParticipants = async () => {
+    try {
+      const participants: User[] = [];
+
+      // Note: Since Solidity doesn't have a built-in way to iterate over mappings,
+      // we would need to maintain a separate array of participant addresses in the contract
+      // For now, we'll use the mock data and show how it would work with the contract
+
+      // This is a limitation of the current contract design
+      // To get all participants, you would need to modify the contract to include:
+      // - An array of participant addresses
+      // - A function to return all participants
+
+      console.log("Total participants from contract:", participantCount);
+
+      // For demonstration, we'll use the mock submissions that match this quest
+      const questParticipants = mockSubmissions.filter(
+        (submission) =>
+          submission.questContractAddress === quest.contractAddress
+      );
+
+      setAllParticipants(
+        questParticipants.map((sub) => ({
+          walletAddress: sub.walletAddress,
+          username: sub.username,
+          submission: sub.proofUrl,
+          isParticipant: true,
+        }))
+      );
+    } catch (error) {
+      console.error("Error getting participants:", error);
+      toast.error("Failed to get participants.");
+    }
   };
+
+  // Load participants when component mounts
+  useEffect(() => {
+    getAllParticipants();
+  }, [quest.contractAddress]);
 
   return (
     <Card className="group w-full max-w-sm rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50/50">
@@ -335,7 +639,8 @@ export default function QuestCard({
               <span className="text-gray-600">Participants</span>
             </div>
             <span className="font-medium text-gray-900">
-              {quest.currentParticipants}/{quest.maxParticipants}
+              {contractParticipantCount || quest.currentParticipants}/
+              {quest.maxParticipants}
             </span>
           </div>
 
@@ -358,10 +663,18 @@ export default function QuestCard({
       <CardFooter className="flex-col gap-2">
         <Button
           onClick={() => joinQuest(quest)}
-          disabled={isJoining || hasParticipated || isFull}
+          disabled={isJoining || isWritePending || hasParticipated || isFull || !isReadyToInteract || isSwitchingNetwork}
           className="w-full !bg-gradient-to-r !from-yellow-500 !to-orange-500 border py-2 !text-white font-semibold rounded-lg flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isJoining
+          {!isAuthenticated
+            ? "Authenticate with World ID"
+            : !isConnected
+            ? "Connect Wallet"
+            : isSwitchingNetwork
+            ? "Switching Network..."
+            : !isCorrectNetwork
+            ? "Switch to World Chain Sepolia"
+            : isJoining || isWritePending
             ? "Joining..."
             : hasParticipated
             ? "Already Joined"
@@ -370,7 +683,7 @@ export default function QuestCard({
             : "Join Quest"}
         </Button>
 
-        {!hasParticipated && (
+        {hasParticipated && (
           <Drawer>
             <DrawerTrigger className="flex justify-center items-center gap-2 w-full border border-gray-200 rounded-lg p-2">
               <Send className="w-4 h-4" />
@@ -413,7 +726,7 @@ export default function QuestCard({
                           />
                         </FormControl>
                         <FormDescription className="text-xs text-gray-500">
-                          Add a link of screenshat that includes your World App
+                          Add a link of screenshot that includes your World App
                           username or/and your World App wallet address
                         </FormDescription>
                         <FormMessage />
@@ -423,9 +736,10 @@ export default function QuestCard({
                   <Button
                     className="w-full !bg-gradient-to-r !from-yellow-500 !to-orange-500 border py-2 !text-white font-semibold rounded-lg flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     type="submit"
-                    disabled={isJoining || hasParticipated || isFull}
                   >
-                    Send Proof
+                    {isSubmitting || isWritePending
+                      ? "Submitting..."
+                      : "Send Proof"}
                   </Button>
                 </form>
               </Form>
@@ -433,7 +747,7 @@ export default function QuestCard({
           </Drawer>
         )}
 
-        {!hasParticipated && (
+        {hasParticipated && (
           <Drawer>
             <DrawerTrigger className="flex justify-center items-center gap-2 w-full border border-gray-200 rounded-lg p-2">
               <Eye className="w-4 h-4" />
@@ -465,7 +779,7 @@ export default function QuestCard({
                 </TabsList>
                 <TabsContent
                   value="individual"
-                  className="max-h-[400px] overflow-y-auto py-4"
+                  className="max-h-[400px] w-[80%] mx-auto overflow-y-auto py-4"
                 >
                   <h6 className="text-sm font-medium">Quest ID</h6>
                   <p className="text-sm text-gray-500">{quest.id}</p>
@@ -477,62 +791,92 @@ export default function QuestCard({
                     {quest.contractAddress}
                   </p>
                   <br />
-                  <h6 className="text-sm font-medium">Verify Proof</h6>
-                  <p className="text-sm text-gray-500">{verifyProof}</p>
+                  <h6 className="text-sm font-medium">Authentication Status</h6>
+                  <p className="text-sm text-gray-500">
+                    {isAuthenticated ? "✅ Authenticated via World ID" : "❌ Not Authenticated"}
+                  </p>
                   <br />
-                  <h6 className="text-sm font-medium">Signed Message Hash</h6>
-                  <p className="text-sm text-gray-500">{messageHash}</p>
+                  <h6 className="text-sm font-medium">Wallet Connection</h6>
+                  <p className="text-sm text-gray-500">
+                    {isConnected ? `✅ Connected: ${address?.slice(0, 6)}...${address?.slice(-4)}` : "❌ Not Connected"}
+                  </p>
                   <br />
-                  <h6 className="text-sm font-medium">TX</h6>
-                  <p className="text-sm text-gray-500">0x34dc3a...</p>
+                  <h6 className="text-sm font-medium">Network</h6>
+                  <p className="text-sm text-gray-500">
+                    {isCorrectNetwork
+                      ? "✅ World Chain Sepolia"
+                      : isConnected
+                      ? `❌ Wrong Network: ${chain?.name}`
+                      : "❌ Not Connected"}
+                  </p>
+                  <br />
+                  <h6 className="text-sm font-medium">Contract Participants</h6>
+                  <p className="text-sm text-gray-500">
+                    {contractParticipantCount}
+                  </p>
                   <br />
                   <h6 className="text-sm font-medium">Joined At</h6>
-                  <p className="text-sm text-gray-500">2025-01-01</p>
+                  <p className="text-sm text-gray-500">
+                    {hasParticipated ? new Date().toLocaleDateString() : "Not joined yet"}
+                  </p>
                   <br />
                 </TabsContent>
                 <TabsContent className="py-4" value="organization">
                   <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
-                    {mockSubmissions.map(
-                      (submission) =>
-                        submission.questContractAddress ===
-                          quest.contractAddress && (
-                          <div
-                            key={submission.id}
-                            className="border border-gray-200 rounded-lg p-3 flex flex-col gap-2"
-                          >
-                            <p>
-                              <b>Username:</b> {submission.username}
-                            </p>
-                            <p>
-                              <b>Wallet Address:</b>{" "}
-                              {submission.walletAddress.slice(0, 6)}...
-                              {submission.walletAddress.slice(-4)}
-                            </p>
-                            <p>
-                              <b>Proof Link:</b>{" "}
-                              <Link href={submission.proofLink} target="_blank">
-                                <span className="text-sm text-blue-500 underline hover:text-blue-600">
-                                  {submission.proofLink}
-                                </span>
-                              </Link>
-                            </p>
-                            <div className="flex justify-between items-center">
-                              <Button
-                                onClick={() => acceptSubmission(submission)}
-                                className="w-[50%] !bg-gradient-to-r !from-yellow-500 !to-orange-500 border py-2 !text-white font-semibold rounded-lg flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Accept
-                              </Button>
-                              <Button
-                                onClick={() => sendPrize(submission)}
-                                className="w-[50%] !bg-gradient-to-r !from-yellow-500 !to-orange-500 border py-2 !text-white font-semibold rounded-lg flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Send Prize
-                              </Button>
+                    {allParticipants.map((participant) => (
+                      <div
+                        key={participant.walletAddress}
+                        className="border border-gray-200 rounded-lg p-3 flex flex-col gap-2"
+                      >
+                        <p>
+                          <b>Username:</b> {participant.username}
+                        </p>
+                        <p>
+                          <b>Wallet Address:</b>{" "}
+                          {participant.walletAddress.slice(0, 6)}...
+                          {participant.walletAddress.slice(-4)}
+                        </p>
+                        <p>
+                          <b>Proof Link:</b>{" "}
+                          <Link href={participant.submission} target="_blank">
+                            <span className="text-sm text-blue-500 underline hover:text-blue-600">
+                              {participant.submission}
+                            </span>
+                          </Link>
+                        </p>
+                        <div className="flex justify-between items-center">
+                          {contractOwner &&
+                          typeof contractOwner === "string" &&
+                          contractOwner.toLowerCase() ===
+                            address?.toLowerCase() ? (
+                            <Button
+                              onClick={() =>
+                                sendPrize({
+                                  id: "1",
+                                  questId: quest.id.toString(),
+                                  username: participant.username,
+                                  walletAddress: participant.walletAddress,
+                                  proofUrl: participant.submission,
+                                  questContractAddress: quest.contractAddress,
+                                  submittedAt: new Date().toISOString(),
+                                  status: "pending"
+                                })
+                              }
+                              disabled={isSendingPrize || isWritePending}
+                              className="w-full !bg-gradient-to-r !from-yellow-500 !to-orange-500 border py-2 !text-white font-semibold rounded-lg flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {isSendingPrize || isWritePending
+                                ? "Sending..."
+                                : "Send Prize"}
+                            </Button>
+                          ) : (
+                            <div className="w-full text-center p-2 bg-gray-100 rounded-lg text-sm text-gray-500">
+                              Only contract owner can send prizes
                             </div>
-                          </div>
-                        )
-                    )}
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </TabsContent>
               </Tabs>

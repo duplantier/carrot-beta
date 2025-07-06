@@ -65,9 +65,7 @@ export const AuthButton = () => {
             width={200}
             height={200}
           />
-          <p className="text-gray-600 text-xs">
-            Engage & Earn. Simple is that.
-          </p>
+          <p className="text-gray-600 text-xs">Verify & Engage & Earn</p>
         </div>
         <Button
           onClick={onClick}

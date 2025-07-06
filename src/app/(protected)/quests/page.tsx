@@ -4,6 +4,7 @@ import { mockQuests } from "@/lib/mocks/mock-quests";
 import QuestCard from "@/components/quest-card";
 import { auth } from "@/auth";
 import { MiniKit } from "@worldcoin/minikit-js";
+import { WelcomeBanner } from "@/components/WelcomeBanner";
 
 const QuestsPage = async () => {
   const session = await auth();
@@ -17,6 +18,11 @@ const QuestsPage = async () => {
 
   return (
     <Page.Main className="container mx-auto px-4 py-12 flex  items-center flex-col">
+      {/* Welcome Banner */}
+      <div className="w-full max-w-4xl mx-auto mb-8">
+        <WelcomeBanner />
+      </div>
+      
       <h1 className="text-4xl from-yellow-500 to-orange-500 bg-clip-text text-transparent bg-gradient-to-r">
         <b>Quests</b>
       </h1>

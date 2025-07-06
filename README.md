@@ -1,33 +1,66 @@
-## Create a Mini App
+## Foundry
 
-[Mini apps](https://docs.worldcoin.org/mini-apps) enable third-party developers to create native-like applications within World App.
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-This template is a way for you to quickly get started with authentication and examples of some of the trickier commands.
+Foundry consists of:
 
-## Getting Started
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
-1. cp .env.example .env.local
-2. Follow the instructions in the .env.local file
-3. Run `npm run dev`
-4. Run `ngrok http 3000`
-5. Run `npx auth secret` to update the `AUTH_SECRET` in the .env.local file
-6. Add your domain to the `allowedDevOrigins` in the next.config.ts file.
-7. [For Testing] If you're using a proxy like ngrok, you need to update the `AUTH_URL` in the .env.local file to your ngrok url.
-8. Continue to developer.worldcoin.org and make sure your app is connected to the right ngrok url
-9. [Optional] For Verify and Send Transaction to work you need to do some more setup in the dev portal. The steps are outlined in the respective component files.
+## Documentation
 
-## Authentication
+https://book.getfoundry.sh/
 
-This starter kit uses [Minikit's](https://github.com/worldcoin/minikit-js) wallet auth to authenticate users, and [next-auth](https://authjs.dev/getting-started) to manage sessions.
+## Usage
 
-## UI Library
+### Build
 
-This starter kit uses [Mini Apps UI Kit](https://github.com/worldcoin/mini-apps-ui-kit) to style the app. We recommend using the UI kit to make sure you are compliant with [World App's design system](https://docs.world.org/mini-apps/design/app-guidelines).
+```shell
+$ forge build
+```
 
-## Eruda
+### Test
 
-[Eruda](https://github.com/liriliri/eruda) is a tool that allows you to inspect the console while building as a mini app. You should disable this in production.
+```shell
+$ forge test
+```
 
-## Contributing
+### Format
 
-This template was made with help from the amazing [supercorp-ai](https://github.com/supercorp-ai) team.
+```shell
+$ forge fmt
+```
+
+### Gas Snapshots
+
+```shell
+$ forge snapshot
+```
+
+### Anvil
+
+```shell
+$ anvil
+```
+
+### Deploy
+
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
+
+### Cast
+
+```shell
+$ cast <subcommand>
+```
+
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
