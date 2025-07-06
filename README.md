@@ -130,13 +130,13 @@ sequenceDiagram
     C->>C: Store budget
     C->>F: BudgetDeposited event
     
-    F->>F: Start Kahoot Quiz
-    P->>F: Complete Quiz
-    F->>F: Calculate Rankings
+    F->>F: Join Quest
+    P->>F: Complete Quest
+    F->>F: Distiribute Money
     
     loop For each participant
-        F->>C: calculateReward(position, total)
-        C->>F: Return reward amount
+        F->>C: joinQuest()
+        C->>F: Complete Quest
         O->>C: distributeReward(participant, amount)
         C->>W: Transfer ETH
         C->>F: RewardDistributed event
