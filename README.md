@@ -292,9 +292,10 @@ This modular approach allows us to rapidly adapt to new opportunities in the Web
 ###  Demo & Screenshots
 
 ####  **Live Demo**
-- **Contract Address**: `0x3EBc2a9Fc2b47445AAdb2004cAE4FeCFb8e0Fba6`
+- **Contract Address**: `0xFb5d825aF1Cedd96b995Eba9D125B4b89F8314a2`
+- **Transaction Hash**: `0x4a383a14026bb09034e0d80b4de86c25b0b13701036f8acd706aa4f9b471e334`
+- **Deployer**: `0xEE1266b7C8F73852369476BD878dEFe9C7302bbE`
 - **Network**: World Chain Sepolia Testnet
-- **Explorer**: [View on BlockScout](https://worldchain-sepolia.blockscout.com/address/0x3EBc2a9Fc2b47445AAdb2004cAE4FeCFb8e0Fba6)
 
 #### **Integration Flow**
 ```
