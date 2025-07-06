@@ -1,8 +1,5 @@
 "use client";
-import {
-  MiniKit,
-  SignMessageInput,
-} from "@worldcoin/minikit-js";
+import { MiniKit, SignMessageInput } from "@worldcoin/minikit-js";
 import {
   useWriteContract,
   useReadContract,
@@ -78,8 +75,8 @@ export default function QuestCard({
   username: string;
 }) {
   const participationPercentage =
-    (quest.currentParticipants / quest.maxParticipants) * 100;
-  const spotsRemaining = quest.maxParticipants - quest.currentParticipants;
+    (quest.currentParticipants ?? 0 / quest.maxParticipants) * 100;
+  const spotsRemaining = quest.maxParticipants - (quest.currentParticipants ?? 0);
   const isAlmostFull = participationPercentage > 80;
   const isFull = participationPercentage >= 100;
   const [messageHash, setMessageHash] = useState<string | null>(null);
@@ -92,15 +89,23 @@ export default function QuestCard({
   const [contractParticipantCount, setContractParticipantCount] =
     useState<number>(0);
 
-  const { writeContract, isPending: isWritePending, isSuccess, isError, data: transactionHash, error } = useWriteContract();
+  const {
+    writeContract,
+    isPending: isWritePending,
+    isSuccess,
+    isError,
+    data: transactionHash,
+    error,
+  } = useWriteContract();
   const { isConnected, address, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const session = useSession();
 
   // Wait for transaction receipt
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash: transactionHash,
-  });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: transactionHash,
+    });
 
   // Debug session data
   useEffect(() => {
@@ -162,7 +167,10 @@ export default function QuestCard({
 
   // Check if user has already participated in this quest (using both ID and contract address)
   useEffect(() => {
-    const localParticipation = hasUserParticipatedInQuest(quest.id.toString(), quest.contractAddress);
+    const localParticipation = hasUserParticipatedInQuest(
+      quest.id.toString(),
+      quest.contractAddress
+    );
     const contractParticipation = isUserParticipant === true;
 
     setHasParticipated(localParticipation || contractParticipation || false);
@@ -170,7 +178,10 @@ export default function QuestCard({
 
   // Check if user has already submitted proof for this quest
   useEffect(() => {
-    const hasSubmitted = hasUserSubmittedProofForQuest(quest.id.toString(), quest.contractAddress);
+    const hasSubmitted = hasUserSubmittedProofForQuest(
+      quest.id.toString(),
+      quest.contractAddress
+    );
     setHasSubmittedProof(hasSubmitted);
   }, [quest.id, quest.contractAddress]);
 
@@ -214,21 +225,33 @@ export default function QuestCard({
         const saveSuccess = saveQuestParticipation(userParticipation);
         if (saveSuccess) {
           setHasParticipated(true);
-          toast.success("Quest joined successfully! Your participation has been saved.");
+          toast.success(
+            "Quest joined successfully! Your participation has been saved."
+          );
         } else {
           toast.error("Failed to save your participation. Please try again.");
         }
       }
-      
+
       setIsJoining(false);
       setIsSubmitting(false);
     }
-  }, [isSuccess, transactionHash, quest.id, quest.contractAddress, messageHash, isSubmitting, isJoining]);
+  }, [
+    isSuccess,
+    transactionHash,
+    quest.id,
+    quest.contractAddress,
+    messageHash,
+    isSubmitting,
+    isJoining,
+  ]);
 
   useEffect(() => {
     if (isError && error) {
       console.error("Transaction failed:", error);
-      toast.error(`Transaction failed: ${error.message || "Please try again."}`);
+      toast.error(
+        `Transaction failed: ${error.message || "Please try again."}`
+      );
       setIsJoining(false);
       setIsSubmitting(false);
     }
@@ -272,14 +295,14 @@ export default function QuestCard({
     if (!isCorrectNetwork) {
       toast.error("Please switch to World Chain Sepolia network.");
       setIsSwitchingNetwork(true);
-      
+
       // Add timeout for network switching
       const networkSwitchTimeout = setTimeout(() => {
         setIsSwitchingNetwork(false);
         setIsJoining(false);
         toast.error("Network switching timed out. Please try again.");
       }, 10000); // 10 second timeout
-      
+
       try {
         await switchChain({ chainId: worldchainSepolia.id });
         clearTimeout(networkSwitchTimeout);
@@ -515,7 +538,9 @@ export default function QuestCard({
         chainId: worldchainSepolia.id,
       });
 
-      toast.info("Prize distribution initiated. Please confirm in your wallet.");
+      toast.info(
+        "Prize distribution initiated. Please confirm in your wallet."
+      );
     } catch (error) {
       console.error("Error sending prize:", error);
       toast.error("Failed to send prize. Please try again.");
@@ -663,7 +688,14 @@ export default function QuestCard({
       <CardFooter className="flex-col gap-2">
         <Button
           onClick={() => joinQuest(quest)}
-          disabled={isJoining || isWritePending || hasParticipated || isFull || !isReadyToInteract || isSwitchingNetwork}
+          disabled={
+            isJoining ||
+            isWritePending ||
+            hasParticipated ||
+            isFull ||
+            !isReadyToInteract ||
+            isSwitchingNetwork
+          }
           className="w-full !bg-gradient-to-r !from-yellow-500 !to-orange-500 border py-2 !text-white font-semibold rounded-lg flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {!isAuthenticated
@@ -793,12 +825,19 @@ export default function QuestCard({
                   <br />
                   <h6 className="text-sm font-medium">Authentication Status</h6>
                   <p className="text-sm text-gray-500">
-                    {isAuthenticated ? "✅ Authenticated via World ID" : "❌ Not Authenticated"}
+                    {isAuthenticated
+                      ? "✅ Authenticated via World ID"
+                      : "❌ Not Authenticated"}
                   </p>
                   <br />
                   <h6 className="text-sm font-medium">Wallet Connection</h6>
                   <p className="text-sm text-gray-500">
-                    {isConnected ? `✅ Connected: ${address?.slice(0, 6)}...${address?.slice(-4)}` : "❌ Not Connected"}
+                    {isConnected
+                      ? `✅ Connected: ${address?.slice(
+                          0,
+                          6
+                        )}...${address?.slice(-4)}`
+                      : "❌ Not Connected"}
                   </p>
                   <br />
                   <h6 className="text-sm font-medium">Network</h6>
@@ -817,7 +856,9 @@ export default function QuestCard({
                   <br />
                   <h6 className="text-sm font-medium">Joined At</h6>
                   <p className="text-sm text-gray-500">
-                    {hasParticipated ? new Date().toLocaleDateString() : "Not joined yet"}
+                    {hasParticipated
+                      ? new Date().toLocaleDateString()
+                      : "Not joined yet"}
                   </p>
                   <br />
                 </TabsContent>
@@ -859,7 +900,7 @@ export default function QuestCard({
                                   proofUrl: participant.submission,
                                   questContractAddress: quest.contractAddress,
                                   submittedAt: new Date().toISOString(),
-                                  status: "pending"
+                                  status: "pending",
                                 })
                               }
                               disabled={isSendingPrize || isWritePending}
