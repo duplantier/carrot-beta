@@ -1,6 +1,6 @@
 import { Page } from "@/components/PageLayout";
 import React from "react";
-import { mockQuests } from "@/lib/mock-quests";
+import { mockQuests } from "@/lib/mocks/mock-quests";
 import QuestCard from "@/components/quest-card";
 import { auth } from "@/auth";
 import { MiniKit } from "@worldcoin/minikit-js";
@@ -17,16 +17,21 @@ const QuestsPage = async () => {
 
   return (
     <Page.Main className="container mx-auto px-4 py-12 flex  items-center flex-col">
-      <h1 className="text-2xl font-bold from-yellow-500 to-orange-500 bg-clip-text text-transparent bg-gradient-to-r">
-        Quests
+      <h1 className="text-4xl from-yellow-500 to-orange-500 bg-clip-text text-transparent bg-gradient-to-r">
+        <b>Quests</b>
       </h1>
-      <p className="text-sm text-gray-500 text-center">
+      <p className="text-md text-gray-500 text-center">
         Help companies grow their community and increase their engagement. Earn
         rewards for your participation.
       </p>
       <div className="flex flex-col items-center justify-center gap-6 mt-8">
         {mockQuests.map((quest: any) => (
-          <QuestCard key={quest.id} quest={quest} user={user} />
+          <QuestCard
+            key={quest.id}
+            quest={quest}
+            user={user}
+            username={session?.user?.username || ""}
+          />
         ))}
       </div>
     </Page.Main>

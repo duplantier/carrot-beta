@@ -39,7 +39,7 @@ export default function ClientProviders({
 
   return (
     <ErudaProvider>
-      <WagmiProvider config={config}>
+      <WagmiProvider config={config as any}>
         <QueryClientProvider client={queryClient}>
           <MiniKitProvider>
             <SessionProvider session={session}>{children}</SessionProvider>
