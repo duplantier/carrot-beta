@@ -1,13 +1,16 @@
-'use client';
-import { MiniKitProvider } from '@worldcoin/minikit-js/minikit-provider';
-import { Session } from 'next-auth';
-import { SessionProvider } from 'next-auth/react';
-import dynamic from 'next/dynamic';
-import type { ReactNode } from 'react';
+"use client";
+import { config } from "@/config";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MiniKitProvider } from "@worldcoin/minikit-js/minikit-provider";
+import { Session } from "next-auth";
+import { SessionProvider } from "next-auth/react";
+import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
+import { WagmiProvider } from "wagmi";
 
 const ErudaProvider = dynamic(
-  () => import('@/providers/Eruda').then((c) => c.ErudaProvider),
-  { ssr: false },
+  () => import("@/providers/Eruda").then((c) => c.ErudaProvider),
+  { ssr: false }
 );
 
 // Define props for ClientProviders
@@ -32,11 +35,17 @@ export default function ClientProviders({
   children,
   session,
 }: ClientProvidersProps) {
+  const queryClient = new QueryClient();
+
   return (
     <ErudaProvider>
-      <MiniKitProvider>
-        <SessionProvider session={session}>{children}</SessionProvider>
-      </MiniKitProvider>
+      <WagmiProvider config={config}>
+        <QueryClientProvider client={queryClient}>
+          <MiniKitProvider>
+            <SessionProvider session={session}>{children}</SessionProvider>
+          </MiniKitProvider>
+        </QueryClientProvider>
+      </WagmiProvider>
     </ErudaProvider>
   );
 }
